@@ -21,12 +21,13 @@ jobs:
         run: |
           topic="prompt-engineering"
           articles=$(curl -s "https://medium.com/search?q=${topic}" \
-            | cheerio 'a.postArticle-content[href]' \
-            | attr href \
+            | grep -Eo 'href="https://medium.com/[^"]+"' \
+            | sed -E 's/^href="//;s/"$//' \
             | sort \
             | uniq)
 
           for article in ${articles}; do
-            echo "- [$(curl -s ${article} | cheerio 'h1' | text)](${article})" >> links.md
+            title=$(curl -s ${article} | grep -o '<title>.*</title>' | sed -E 's/<title>(.*)<\/title>/\1/')
+            echo "- [${title}](${article})" | tee -a links.md
           done
 
