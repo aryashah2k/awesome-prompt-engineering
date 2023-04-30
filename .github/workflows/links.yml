@@ -24,18 +24,17 @@ jobs:
       - name: Fetch articles
         run: |
           topic="prompt-engineering"
-          jsdom -e 'console.log([...document.querySelectorAll(".postArticle > div > div > div > h3 > a")].map((link) => `* [${link.textContent}](${link.href})`).join("\n"))' https://towardsdatascience.com/tagged/${topic} > links.md
+          jsdom -e 'console.log([...document.querySelectorAll("a[href^=\"/topic/${topic}\"]:not([class]):not([aria-label]):not([aria-labelledby]):not([aria-hidden]):not([role])")].map((link) => `* [${link.textContent}](${link.href})`).join("\n"))' https://medium.com/topic/${topic} > README.md
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+      - name: Configure Git
+        run: |
+          git config --global user.name "aryashah2k"
+          git config --global user.email "arya.shah82@nmims.edu.in"
+
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v7
         with:
-          commit-message: "Add links to TDS articles on ${topic}"
-          title: "Add links to TDS articles on ${topic}"
-          body: |
-            This pull request adds links to articles on the topic "${topic}" from Towards Data Science.
-
-            Please review and merge if appropriate.
-          branch: "add-links-tds-${topic}"
-          base: main
-          path: "links.md"
-
+          add: "."
+          message: "Update links to Medium articles on ${topic}"
+          push: true
+          default_author: true
