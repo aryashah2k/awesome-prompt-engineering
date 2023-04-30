@@ -1,0 +1,40 @@
+# name: Fetch Articles
+
+# on:
+#   schedule:
+#     - cron: "0 0 * * *"
+
+# jobs:
+#   fetch:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
+
+#       - name: Fetch articles
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         run: |
+#           npm install puppeteer
+#           node -e "
+#             const puppeteer = require('puppeteer');
+#             (async () => {
+#               const browser = await puppeteer.launch({ headless: true });
+#               const page = await browser.newPage();
+#               const topic = 'prompt-engineering';
+#               await page.goto('https://medium.com/search?q=' + topic);
+#               const articles = await page.$$eval(
+#                 '.postArticle-readMore a',
+#                 links => links.map(link => ({
+#                   title: link.innerText.trim(),
+#                   url: link.href
+#                 }))
+#               );
+#               await browser.close();
+#               const markdown = articles.map(
+#                 article => '- [' + article.title + '](' + article.url + ')'
+#               ).join('\\n');
+#               require('fs').appendFileSync('links.md', markdown);
+#             })();
+#           "
