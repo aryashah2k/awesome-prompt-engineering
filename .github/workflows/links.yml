@@ -33,36 +33,21 @@ jobs:
           done
 
       - name: Commit changes
-        uses: actions/github-script@v5
+        uses: octokit/request-action@v2.x
+        env:
+          GITHUB_TOKEN: ${{ secrets.AWESOME }}
         with:
-          github-token: ${{ secrets.AWESOME }}
-          script: |
-            const fs = require('fs');
-            const content = fs.readFileSync('links.md', 'utf8');
-            const message = 'Add links to ' + process.env.topic + ' articles';
-            const repo = context.repo;
-            const path = 'links.md';
-            const sha = context.payload.head_commit ? context.payload.head_commit.id : context.sha;
-
-            const createOrUpdateFile = async (content, path, message) => {
-              const response = await octokit.rest.repos.getContent({
-                owner: repo.owner,
-                repo: repo.repo,
-                path: path,
-                ref: sha,
-              });
-
-              const encodedContent = Buffer.from(content).toString('base64');
-
-              await octokit.rest.repos.createOrUpdateFileContents({
-                owner: repo.owner,
-                repo: repo.repo,
-                path: path,
-                message: message,
-                content: encodedContent,
-                sha: response.data.sha,
-                branch: context.ref.replace('refs/heads/', ''),
-              });
-            };
-
-            createOrUpdateFile(content, path, message);
+          method: PUT
+          url: https://api.github.com/repos/${{ github.repository }}/contents/links.md
+          headers: |
+            {
+              "Content-Type": "application/json",
+              "Accept": "application/vnd.github+json"
+            }
+          body: |
+            {
+              "message": "Add links to ${topic} articles",
+              "content": "$(base64 links.md)",
+              "sha": "$(curl -s https://api.github.com/repos/${{ github.repository }}/contents/links.md | jq -r '.sha')",
+              "branch": "${{ github.ref }}"
+            }
