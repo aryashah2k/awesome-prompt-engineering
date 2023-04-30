@@ -19,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.AWESOME }}
         run: |
-          topic="your-topic-here"
+          topic="prompt-engineering"
           articles=$(curl -s "https://medium.com/search?q=${topic}" \
             | grep -Eo 'href="https://medium.com/[^"]+"' \
             | sed -E 's/^href="//;s/"$//' \
