@@ -19,22 +19,23 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
-          npm install -g medium-to-markdown@latest
+          npm install -g jsdom
 
       - name: Fetch articles
         run: |
           topic="prompt-engineering"
-          medium-to-markdown --limit 10 --tag "${topic}" --output links.md
+          jsdom -e 'console.log([...document.querySelectorAll(".postArticle > div > div > div > h3 > a")].map((link) => `* [${link.textContent}](${link.href})`).join("\n"))' https://towardsdatascience.com/tagged/${topic} > links.md
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          commit-message: "Add links to ${topic} articles"
-          title: "Add links to ${topic} articles"
+          commit-message: "Add links to TDS articles on ${topic}"
+          title: "Add links to TDS articles on ${topic}"
           body: |
-            This pull request adds links to articles on the topic "${topic}" from Medium.
+            This pull request adds links to articles on the topic "${topic}" from Towards Data Science.
 
             Please review and merge if appropriate.
-          branch: "add-links-${topic}"
+          branch: "add-links-tds-${topic}"
           base: main
           path: "links.md"
+
