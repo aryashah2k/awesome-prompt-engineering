@@ -19,25 +19,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.AWESOME }}
         run: |
-          npm install puppeteer
-          node -e "
-            const puppeteer = require('puppeteer');
-            (async () => {
-              const browser = await puppeteer.launch({ headless: true });
-              const page = await browser.newPage();
-              const topic = 'your-topic-here';
-              await page.goto('https://medium.com/search?q=' + topic);
-              const articles = await page.$$eval(
-                '.postArticle-readMore a',
-                links => links.map(link => ({
-                  title: link.innerText.trim(),
-                  url: link.href
-                }))
-              );
-              await browser.close();
-              const markdown = articles.map(
-                article => '- [' + article.title + '](' + article.url + ')'
-              ).join('\\n');
-              require('fs').appendFileSync('links.md', markdown);
-            })();
-          "
+          topic="prompt-engineering"
+          articles=$(curl -s "https://medium.com/search?q=${topic}" \
+            | cheerio 'a.postArticle-content[href]' \
+            | attr href \
+            | sort \
+            | uniq)
+
+          for article in ${articles}; do
+            echo "- [$(curl -s ${article} | cheerio 'h1' | text)](${article})" >> links.md
+          done
+
