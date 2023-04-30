@@ -19,12 +19,29 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
-          npm install -g jsdom
+          npm install -g puppeteer
 
       - name: Fetch articles
         run: |
-          topic="prompt-engineering"
-          jsdom -e 'console.log([...document.querySelectorAll("a[href^=\"/topic/${topic}\"]:not([class]):not([aria-label]):not([aria-labelledby]):not([aria-hidden]):not([role])")].map((link) => `* [${link.textContent}](${link.href})`).join("\n"))' https://medium.com/topic/${topic} > README.md
+          topic="your-topic-here"
+          echo "* [Medium articles on ${topic}](https://medium.com/topic/${topic})" > README.md
+          node - << EOF
+          const puppeteer = require('puppeteer');
+          (async () => {
+              const browser = await puppeteer.launch({ headless: true });
+              const page = await browser.newPage();
+              await page.goto(\`https://medium.com/topic/${topic}\`);
+              const links = await page.$$eval('a[href^="/"]', (links) => links.map((link) => {
+                  if (link.getAttribute('href').startsWith('/p/')) {
+                      return \`* [\${link.textContent}](https://medium.com\${link.getAttribute('href')})\`;
+                  }
+              }).filter(Boolean).join('\n'));
+              await browser.close();
+              const readme = await fs.promises.readFile('README.md', 'utf-8');
+              const newReadme = readme + '\n\n' + links;
+              await fs.promises.writeFile('README.md', newReadme);
+          })();
+          EOF
 
       - name: Configure Git
         run: |
