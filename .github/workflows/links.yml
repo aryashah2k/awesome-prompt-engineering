@@ -19,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.AWESOME }}
         run: |
-          topic="prompt-engineering"
+          topic="your-topic-here"
           articles=$(curl -s "https://medium.com/search?q=${topic}" \
             | grep -Eo 'href="https://medium.com/[^"]+"' \
             | sed -E 's/^href="//;s/"$//' \
@@ -31,5 +31,38 @@ jobs:
             title=$(curl -s ${article} | grep -o '<title>.*</title>' | sed -E 's/<title>(.*)<\/title>/\1/')
             echo "- [${title}](${article})" >> links.md
           done
-      - uses: stefanzweifel/git-auto-commit-action@v4
-      
+
+      - name: Commit changes
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.AWESOME }}
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync('links.md', 'utf8');
+            const message = 'Add links to ' + process.env.topic + ' articles';
+            const repo = context.repo;
+            const path = 'links.md';
+            const sha = context.payload.head_commit ? context.payload.head_commit.id : context.sha;
+
+            const createOrUpdateFile = async (content, path, message) => {
+              const response = await octokit.rest.repos.getContent({
+                owner: repo.owner,
+                repo: repo.repo,
+                path: path,
+                ref: sha,
+              });
+
+              const encodedContent = Buffer.from(content).toString('base64');
+
+              await octokit.rest.repos.createOrUpdateFileContents({
+                owner: repo.owner,
+                repo: repo.repo,
+                path: path,
+                message: message,
+                content: encodedContent,
+                sha: response.data.sha,
+                branch: context.ref.replace('refs/heads/', ''),
+              });
+            };
+
+            createOrUpdateFile(content, path, message);
