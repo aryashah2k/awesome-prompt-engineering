@@ -26,8 +26,16 @@ jobs:
             | sort \
             | uniq)
 
+          echo "# ${topic} Articles" > links.md
           for article in ${articles}; do
             title=$(curl -s ${article} | grep -o '<title>.*</title>' | sed -E 's/<title>(.*)<\/title>/\1/')
-            echo "- [${title}](${article})" | tee -a links.md
+            echo "- [${title}](${article})" >> links.md
           done
 
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v8
+        with:
+          author_name: aryashah2k
+          author_email: arya.shah82@nmims.edu.in
+          message: "Add links to ${topic} articles"
+          add: "links.md"
