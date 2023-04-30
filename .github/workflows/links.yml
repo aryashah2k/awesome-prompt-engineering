@@ -15,25 +15,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs npm
+          npm install -g medium-to-markdown@latest
+
       - name: Fetch articles
         run: |
           topic="prompt-engineering"
-          articles=$(curl -s "https://medium.com/search?q=${topic}" \
-            | grep -Eo 'href="https://medium.com/[^"]+"' \
-            | sed -E 's/^href="//;s/"$//' \
-            | sort \
-            | uniq)
-
-          echo "# ${topic} Articles" > README.md
-          for article in ${articles}; do
-            title=$(curl -s ${article} | grep -o '<title>.*</title>' | sed -E 's/<title>(.*)<\/title>/\1/')
-            echo "- [${title}](${article})" >> README.md
-          done
+          medium-to-markdown --limit 10 --tag "${topic}" --output links.md
 
       - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add README.md
-          git commit -m "Add links to ${topic} articles"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Add links to ${topic} articles"
+          commit_options: "--author 'GitHub Action <action@github.com>'"
+          branch: main
+          file_pattern: links.md
