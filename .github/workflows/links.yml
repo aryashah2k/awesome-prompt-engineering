@@ -26,10 +26,15 @@ jobs:
           topic="prompt-engineering"
           medium-to-markdown --limit 10 --tag "${topic}" --output links.md
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
         with:
-          commit_message: "Add links to ${topic} articles"
-          commit_options: "--author 'GitHub Action <action@github.com>'"
-          branch: main
-          file_pattern: links.md
+          commit-message: "Add links to ${topic} articles"
+          title: "Add links to ${topic} articles"
+          body: |
+            This pull request adds links to articles on the topic "${topic}" from Medium.
+
+            Please review and merge if appropriate.
+          branch: "add-links-${topic}"
+          base: main
+          path: "links.md"
